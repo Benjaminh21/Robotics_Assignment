@@ -5,6 +5,7 @@ import numpy as np
 from sensor_msgs.msg import Image, LaserScan
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
+from math import pi
 #from tf import transformations
 
 #roslaunch uol_turtlebot_simulator maze1.launch
@@ -12,7 +13,9 @@ from nav_msgs.msg import Odometry
 twist_pub_ = None
 regions_ = {
     'right': 0,
+    'right/centre': 0,
     'centre': 0,
+    'left/centre': 0,
     'left': 0,
 }
 
@@ -20,7 +23,8 @@ state_ = 2
 current_state_ = {
     0: 'Turn Around',
     1: 'Turn Left',
-    2: 'Forward'
+    2: 'Forward',
+    3: 'Right'
 }
 
 def callback_laser(msg):
@@ -29,11 +33,14 @@ def callback_laser(msg):
 
     global regions_
     regions_ = {
-        'right': msg.ranges[0],
-        'centre': msg.ranges[320],
-        'left': msg.ranges[639],
+        'right': min(min(msg.ranges[0:39]), 10),
+        'right/centre':min(min(msg.ranges[40:240]), 10),
+        'centre': min(min(msg.ranges[241:398]), 10),
+        'left/centre': min(min(msg.ranges[399:599]), 10),
+        'left': min(min(msg.ranges[600:639]), 10),
     }
 
+    #print len(msg.ranges)
     print regions_
     move()
 
@@ -52,20 +59,19 @@ def move():
     linear_x = 0
     angular_z = 0
 
-    distance = 0.5
+    distance = 0.6
+    distance2 = 0.5
+    distance3 = 0.3
 
-    if regions['centre'] < distance:
-        print "Wall ahead"
-        if regions['left'] < distance and regions['right'] < distance:
-            print "Wall both sides Turn around"
-            state(0)
-        else:
-            print "Turn left"
-            state(1)
+    if regions['right'] > distance3:
+        state(1)
+    elif regions['centre'] < distance and regions['left'] > distance2:
+        current_state = "State 1 left"
+        state(1)
     else:
         print "Forward"
         state(2)
-        rospy.loginfo(regions)
+        #rospy.loginfo(regions)
 
 #    twist_pub.publish(msg)
 
@@ -75,19 +81,26 @@ def move():
 def turnAround():
     msg = Twist()
     msg.linear.x = 0
-    msg.angular.z = 0.6
-    print "test"
+    msg.angular.z = 15
+    print "Turning Around"
     return msg
 
 def turnLeft():
+    time = 5
     msg = Twist()
+    #msg.angular.z = pi*2/4/time
     msg.angular.z = 0.3
+    return msg
+
+def turnRight():
+    msg = Twist()
+    msg.angular.z = -15
     return msg
 
 def forward():
     msg = Twist()
-    msg.linear.x = 0.3
-    print "other test"
+    msg.linear.x = 0.1
+    #print "Forward"
     return msg
         
 
@@ -113,8 +126,11 @@ def main():
             rospy.logerr("left")
         elif state_ == 2:
             msg = forward()
+        elif state == 3:
+            msg = turnRight()
         else:
             rospy.logerr('Unknown state!')
+            
         
         twist_pub_.publish(msg)
         

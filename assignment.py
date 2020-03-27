@@ -21,10 +21,9 @@ regions_ = {
 
 state_ = 2
 current_state_ = {
-    0: 'Turn Around',
-    1: 'Turn Left',
+    0: 'Turn Left',
+    1: 'Turn Right',
     2: 'Forward',
-    3: 'Right'
 }
 
 def callback_laser(msg):
@@ -63,17 +62,28 @@ def move():
     distance2 = 0.5
     distance3 = 0.3
 
+    if regions['right'] < regions['left']:
+        LRR = 1
+    else:
+        LRR = 2
+
+    #LRR = np.random.randint(0,2)
+    #print "LRR"
+    #print LRR
+
     if regions['right'] < distance3:
-        state(1)
+        state(0)
     elif regions['right/centre'] < distance2:
-        state(1)
+        state(0)
     elif regions['left'] < distance3:
-        state(3)
-    elif regions['left/centre'] < distance2:
-        state(3)
-    elif regions['centre'] < distance and regions['left'] > distance2:
-        current_state = "State 1 left"
         state(1)
+    elif regions['left/centre'] < distance2:
+        state(1)
+    elif regions['centre'] < distance:
+        if LRR == 1:
+            state(0)
+        elif LRR == 2:
+            state(1)
     else:
         print "Forward"
         state(2)
@@ -82,14 +92,6 @@ def move():
 #    twist_pub.publish(msg)
 
 
-
-
-def turnAround():
-    msg = Twist()
-    msg.linear.x = 0
-    msg.angular.z = 15
-    print "Turning Around"
-    return msg
 
 def turnLeft():
     time = 5
@@ -101,6 +103,7 @@ def turnLeft():
 def turnRight():
     msg = Twist()
     msg.angular.z = -1
+    print "test"
     return msg
 
 def forward():
@@ -112,6 +115,7 @@ def forward():
 
 def main():
     global twist_pub_
+    global state_
 
     rospy.init_node("Explorer")
 		
@@ -126,14 +130,13 @@ def main():
     while not rospy.is_shutdown():
         msg = Twist()
         if state_ == 0:
-            msg = turnAround()
-        elif state_ == 1:
             msg = turnLeft()
             rospy.logerr("left")
+        elif state_ == 1:
+            msg = turnRight()
+            rospy.logerr("right")
         elif state_ == 2:
             msg = forward()
-        elif state == 3:
-            msg = turnRight()
         else:
             rospy.logerr('Unknown state!')
             

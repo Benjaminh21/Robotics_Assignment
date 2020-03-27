@@ -63,8 +63,14 @@ def move():
     distance2 = 0.5
     distance3 = 0.3
 
-    if regions['right'] > distance3:
+    if regions['right'] < distance3:
         state(1)
+    elif regions['right/centre'] < distance2:
+        state(1)
+    elif regions['left'] < distance3:
+        state(3)
+    elif regions['left/centre'] < distance2:
+        state(3)
     elif regions['centre'] < distance and regions['left'] > distance2:
         current_state = "State 1 left"
         state(1)
@@ -89,12 +95,12 @@ def turnLeft():
     time = 5
     msg = Twist()
     #msg.angular.z = pi*2/4/time
-    msg.angular.z = 0.3
+    msg.angular.z = 1
     return msg
 
 def turnRight():
     msg = Twist()
-    msg.angular.z = -15
+    msg.angular.z = -1
     return msg
 
 def forward():

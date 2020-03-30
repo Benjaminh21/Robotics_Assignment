@@ -6,9 +6,18 @@ from sensor_msgs.msg import Image, LaserScan
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from math import pi
-#from tf import transformations
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
+from cv2 import namedWindow, cvtColor, imshow
+from cv2 import COLOR_BGR2Gray, waitKey
+from cv2 import blur, Canny
+
 
 #roslaunch uol_turtlebot_simulator maze1.launch
+
+#Some code including the laser regions set-up was originally taken from 
+#theconstructsim.com/wall-follower/algorithm/
+#Alot has been changed but the original set up was from here.#
 
 twist_pub_ = None
 regions_ = {
@@ -42,6 +51,21 @@ def callback_laser(msg):
     #print len(msg.ranges)
     print regions_
     move()
+
+def callback_image(data):
+    namedWindow("Image Window")
+    namedWindow("blur")
+    namedWindow("canny")
+    cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
+
+    gray_img = cvtColor(cv_image, COLOR_BGR2Gray)
+    print mean(gray_img)
+    img2 = Canny(gray_img, 10, 200)
+    imshow("canny", im2)
+
+    imshow("Image window", cv_image)
+    waitKey(1)
+
 
 def state(state):
     global state_
@@ -119,9 +143,12 @@ def main():
 
     rospy.init_node("Explorer")
 		
+    cv2.startWindowThread()    
+    bridge = CvBridge()
+
     #Subscribers
-    #self.image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, callback_laser,queue_size=1)
     laser_sub = rospy.Subscriber("/scan", LaserScan, callback_laser)
+    image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, callback_image)
 
     #Publishers
     twist_pub_ = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=1)

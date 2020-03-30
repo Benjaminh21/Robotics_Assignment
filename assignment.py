@@ -20,8 +20,8 @@ from cv2 import blur, Canny
 #Alot has been changed but the original set up was from here.#
 
 twist_pub_ = None
-regions_ = {
-    'right': 0,
+regions_ = {                #Laser scan regions are split into 5 shown here#
+    'right': 0,             #This allows for the robot to detect obstacles in specific regions#
     'right/centre': 0,
     'centre': 0,
     'left/centre': 0,
@@ -29,10 +29,10 @@ regions_ = {
 }
 
 state_ = 2
-current_state_ = {
-    0: 'Turn Left',
+current_state_ = {          #If the robot detects an obstacle, it will change state#
+    0: 'Turn Left',         #If a wall is to the right it will change to turn left#
     1: 'Turn Right',
-    2: 'Forward',
+    2: 'Forward',           #Moving forward is the default state#
 }
 
 def callback_laser(msg):
@@ -41,10 +41,10 @@ def callback_laser(msg):
 
     global regions_
     regions_ = {
-        'right': min(min(msg.ranges[0:39]), 10),
-        'right/centre':min(min(msg.ranges[40:240]), 10),
-        'centre': min(min(msg.ranges[241:398]), 10),
-        'left/centre': min(min(msg.ranges[399:599]), 10),
+        'right': min(min(msg.ranges[0:39]), 10),            #Here I split the laser scan ranges#
+        'right/centre':min(min(msg.ranges[40:240]), 10),    #The lowest value from the range will be returned#
+        'centre': min(min(msg.ranges[241:398]), 10),        #So out if the 100 scan lines on left/centre the one with the lowest value is returned#
+        'left/centre': min(min(msg.ranges[399:599]), 10),   #Lowest value means the one with the closest object#
         'left': min(min(msg.ranges[600:639]), 10),
     }
 
@@ -71,46 +71,44 @@ def state(state):
     global state_
     global current_state_
     if state is not state_:
-        print 'Current state - [%s] - %s' % (state, current_state_[state])
-        state_ = state
+        print 'Current state - [%s] - %s' % (state, current_state_[state])      #If a requirement is met e.g. obstacle in the way#
+        state_ = state                                                          #The state is changed and a print message is displayed to tell the user#
 
 def move():
     global regions_
     regions = regions_
     global twist_pub
-    msg = Twist()
-    linear_x = 0
+    msg = Twist()   #Twist message is created#
+    linear_x = 0    #Forward and twist speed is set to 0 by default#
     angular_z = 0
 
-    distance = 0.6
-    distance2 = 0.5
+    distance = 0.6  #These distances are from an object or wall#
+    distance2 = 0.5 #0.5 means 0.5 metres from ibstac
     distance3 = 0.3
 
     if regions['right'] < regions['left']:
-        LRR = 1
-    else:
+        LRR = 1                             #LRR is used to determine whether to turn left or right#
+    else:                                   #If there is more space on the left it will turn left and vise versa#
         LRR = 2
 
-    #LRR = np.random.randint(0,2)
-    #print "LRR"
-    #print LRR
 
-    if regions['right'] < distance3:
+
+    if regions['right'] < distance3:            #If there is a wall less than 0.3 metres to the right, the robot will change state and turn left slightly#
         state(0)
-    elif regions['right/centre'] < distance2:
+    elif regions['right/centre'] < distance2:   #If there is a wall less than 0.5 metres in front and to the right, the robot will turn left slightly#
         state(0)
-    elif regions['left'] < distance3:
+    elif regions['left'] < distance3:           #If there is a wall less than 0.6 metres to the left, the robot will change to state 1 and turn right#
         state(1)
     elif regions['left/centre'] < distance2:
         state(1)
-    elif regions['centre'] < distance:
+    elif regions['centre'] < distance:          #If there is a wall directly ahead, the robot will decide whether to turn left or right#
         if LRR == 1:
             state(0)
         elif LRR == 2:
             state(1)
     else:
         print "Forward"
-        state(2)
+        state(2)                                #Default state for the robot is to move forward#
         #rospy.loginfo(regions)
 
 #    twist_pub.publish(msg)
@@ -121,13 +119,12 @@ def turnLeft():
     time = 5
     msg = Twist()
     #msg.angular.z = pi*2/4/time
-    msg.angular.z = 1
-    return msg
-
+    msg.angular.z = 1               #If the robot needs to turn left the angular momentem is changed to 1#
+    return msg                      #Twist message is returned#                           
+                                    #This is repreated for turning right and moving forward#
 def turnRight():
     msg = Twist()
     msg.angular.z = -1
-    print "test"
     return msg
 
 def forward():
@@ -156,21 +153,21 @@ def main():
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         msg = Twist()
-        if state_ == 0:
+        if state_ == 0:            #If the current state = 0, then the robot needs to turn left and the turnLeft function is called#
             msg = turnLeft()
             rospy.logerr("left")
-        elif state_ == 1:
+        elif state_ == 1:          #If the current state = 1, then the robot needs to turn right and the turnRight function is called#
             msg = turnRight()
             rospy.logerr("right")
         elif state_ == 2:
             msg = forward()
         else:
-            rospy.logerr('Unknown state!')
+            rospy.logerr('Unknown state!')  #If the state is unknown an error message is displayed to the user#
             
         
-        twist_pub_.publish(msg)
+        twist_pub_.publish(msg)     #Twist message is published to tell the robot what movement to carry out#
         
-        rate.sleep()
+        rate.sleep()                #The program sleeps to allow the robot to carry out movement before checking for a new state#
  
 
     #rospy.spin()

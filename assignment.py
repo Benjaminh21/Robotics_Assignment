@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy 
-import numpy as np
+#import numpy as np
+import numpy
 from sensor_msgs.msg import Image, LaserScan
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
@@ -9,7 +10,7 @@ from math import pi
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from cv2 import namedWindow, cvtColor, imshow
-#from cv2 import COLOR_BGR2Gray, waitKey
+from cv2 import waitKey
 from cv2 import blur, Canny
 
 
@@ -52,14 +53,31 @@ def callback_laser(msg):
     print regions_
     move()
 
-# def callback_image(data):
-#     try:
-#         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
-#     except CvBridgeError as e:
-#         print(e)
+def callback_image(data):
+    try:
+        cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+    except CvBridgeError as e:
+        print(e)
 
-#     cv2.imshow("Image Window", cv_image)
-#     cv2.waitkey(1)
+    bgr_thresh = cv2.inRange(cv_image,
+                            numpy.array((30, 30, 30)),
+                            numpy.array((100, 255, 255)))
+
+    hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+
+    hsv_thresh = cv2.inRange(hsv_img, 
+                            numpy.array((30, 30, 30 )),
+                            numpy.array((100, 255, 255)))
+
+    M = cv2.moments(hsv_thresh)
+    if M['m00'] > 0:
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        print('cx: %f, cy %f' %(cx, cy))
+        cv2.circle(cv_image, (cx, cy), 20, (255, 0, 0), -1)
+
+    cv2.imshow("Image Window", cv_image)
+    cv2.waitKey(1)
 
 
 def state(state):
@@ -130,14 +148,14 @@ def forward():
 def main():
     global twist_pub_
     global state_
-
+    global bridge
     rospy.init_node("Explorer")
 		
     bridge = CvBridge()
 
     #Subscribers
     laser_sub = rospy.Subscriber("/scan", LaserScan, callback_laser)
-    #image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, callback_image)
+    image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, callback_image)
 
     #Publishers
     twist_pub_ = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=1)

@@ -53,18 +53,13 @@ def callback_laser(msg):
     move()
 
 def callback_image(data):
-    namedWindow("Image Window")
-    namedWindow("blur")
-    namedWindow("canny")
-    cv_image = bridge.imgmsg_to_cv2(data, "bgr8")
+    try:
+        cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+    except CvBridgeError as e:
+        print(e)
 
-    gray_img = cvtColor(cv_image, COLOR_BGR2Gray)
-    print mean(gray_img)
-    img2 = Canny(gray_img, 10, 200)
-    imshow("canny", im2)
-
-    imshow("Image window", cv_image)
-    waitKey(1)
+    cv2.imshow("Image Window", cv_image)
+    cv2.waitkey(1)
 
 
 def state(state):
@@ -90,8 +85,6 @@ def move():
         LRR = 1                             #LRR is used to determine whether to turn left or right#
     else:                                   #If there is more space on the left it will turn left and vise versa#
         LRR = 2
-
-
 
     if regions['right'] < distance3:            #If there is a wall less than 0.3 metres to the right, the robot will change state and turn left slightly#
         state(0)
@@ -140,7 +133,6 @@ def main():
 
     rospy.init_node("Explorer")
 		
-    cv2.startWindowThread()    
     bridge = CvBridge()
 
     #Subscribers
@@ -168,6 +160,8 @@ def main():
         twist_pub_.publish(msg)     #Twist message is published to tell the robot what movement to carry out#
         
         rate.sleep()                #The program sleeps to allow the robot to carry out movement before checking for a new state#
+
+        cv2.destroyAllWindows()
  
 
     #rospy.spin()

@@ -9,7 +9,7 @@ from math import pi
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from cv2 import namedWindow, cvtColor, imshow
-from cv2 import COLOR_BGR2Gray, waitKey
+#from cv2 import COLOR_BGR2Gray, waitKey
 from cv2 import blur, Canny
 
 
@@ -52,14 +52,14 @@ def callback_laser(msg):
     print regions_
     move()
 
-def callback_image(data):
-    try:
-        cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
-    except CvBridgeError as e:
-        print(e)
+# def callback_image(data):
+#     try:
+#         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
+#     except CvBridgeError as e:
+#         print(e)
 
-    cv2.imshow("Image Window", cv_image)
-    cv2.waitkey(1)
+#     cv2.imshow("Image Window", cv_image)
+#     cv2.waitkey(1)
 
 
 def state(state):
@@ -137,7 +137,7 @@ def main():
 
     #Subscribers
     laser_sub = rospy.Subscriber("/scan", LaserScan, callback_laser)
-    image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, callback_image)
+    #image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image, callback_image)
 
     #Publishers
     twist_pub_ = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=1)
@@ -161,7 +161,7 @@ def main():
         
         rate.sleep()                #The program sleeps to allow the robot to carry out movement before checking for a new state#
 
-        cv2.destroyAllWindows()
+        #cv2.destroyAllWindows()
  
 
     #rospy.spin()

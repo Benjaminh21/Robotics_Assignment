@@ -109,7 +109,7 @@ def move():
 
     distance = 0.6  #These distances are from an object or wall#
     distance2 = 0.5 #0.5 means 0.5 metres from ibstac
-    distance3 = 0.3
+    distance3 = 0.4
 
     if regions['right'] < regions['left']:
         LRR = 1                             #LRR is used to determine whether to turn left or right#
@@ -136,13 +136,6 @@ def move():
 
 #    twist_pub.publish(msg)
 
-def turnAround():
-    twist_pub_ = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=1)
-    msg = Twist()
-    msg.angular.z = 3.1
-    twist_pub_.publish(msg)
-    time.sleep(2)
-    return 0
 
 def turnLeft():
     time = 5
@@ -195,7 +188,7 @@ def main():
         
         twist_pub_.publish(msg)     #Twist message is published to tell the robot what movement to carry out#
         
-        time.sleep(1)
+        time.sleep(2)
         rate.sleep()                #The program sleeps to allow the robot to carry out movement before checking for a new state#
         
         #cv2.destroyAllWindows()

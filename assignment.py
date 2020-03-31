@@ -12,6 +12,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from cv2 import namedWindow, cvtColor, imshow
 from cv2 import waitKey
 from cv2 import blur, Canny
+import time
 
 
 #roslaunch uol_turtlebot_simulator maze1.launch
@@ -78,17 +79,18 @@ def callback_image(data):
         cy = int(M['m01']/M['m00'])
         print('cx: %f, cy %f' %(cx, cy))
         cv2.circle(cv_image, (cx, cy), 10, (255, 0, 0), -1)
-        rate = rospy.Rate(2000)
-        msg.linear.x = -1
-        msg.angular.z = 10
-        rate.sleep
+        #rate = rospy.Rate(2000)
+        #turnAround()
+        msg.angular.z = 3
+        twist_pub_.publish(msg)
+        #rate.sleep
         print "Read Ahead - Avoiding"
     else:
         print "No traps ahead"
 
     cv2.imshow("Image Window", cv_image)
     cv2.waitKey(1)
-    twist_pub_.publish(msg)
+    
 
 def state(state):
     global state_
@@ -134,7 +136,13 @@ def move():
 
 #    twist_pub.publish(msg)
 
-
+def turnAround():
+    twist_pub_ = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=1)
+    msg = Twist()
+    msg.angular.z = 3.1
+    twist_pub_.publish(msg)
+    time.sleep(2)
+    return 0
 
 def turnLeft():
     time = 5
@@ -187,8 +195,9 @@ def main():
         
         twist_pub_.publish(msg)     #Twist message is published to tell the robot what movement to carry out#
         
+        time.sleep(1)
         rate.sleep()                #The program sleeps to allow the robot to carry out movement before checking for a new state#
-
+        
         #cv2.destroyAllWindows()
  
 

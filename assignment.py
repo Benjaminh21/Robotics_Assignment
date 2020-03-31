@@ -68,26 +68,26 @@ def callback_image(data):
 
     hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
 
-    hsv_thresh = cv2.inRange(hsv_img, 
-                            numpy.array((50, 205, 50 )),
-                            numpy.array((100, 255, 255)))
+    hsv_thresh_red = cv2.inRange(hsv_img, 
+                            numpy.array((0, 100, 100 )),
+                            numpy.array((10, 255, 255)))
 
-    M = cv2.moments(hsv_thresh)
+    M = cv2.moments(hsv_thresh_red)
     if M['m00'] > 0:
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
         print('cx: %f, cy %f' %(cx, cy))
         cv2.circle(cv_image, (cx, cy), 10, (255, 0, 0), -1)
+        rate = rospy.Rate(2000)
+        msg.linear.x = -1
+        msg.angular.z = 10
+        rate.sleep
+        print "Read Ahead - Avoiding"
+    else:
+        print "No traps ahead"
 
     cv2.imshow("Image Window", cv_image)
     cv2.waitKey(1)
-
-    if(data.data>200):
-        msg.linear.x = 0.1
-        print "test"
-        quit()
-    else:
-        msg.linear.x = 0
     twist_pub_.publish(msg)
 
 def state(state):

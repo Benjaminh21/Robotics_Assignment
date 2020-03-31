@@ -59,14 +59,17 @@ def callback_image(data):
     except CvBridgeError as e:
         print(e)
 
+    twist_pub_ = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=1)
+    msg = Twist()
+
     bgr_thresh = cv2.inRange(cv_image,
-                            numpy.array((30, 30, 30)),
+                            numpy.array((50, 205, 50)),
                             numpy.array((100, 255, 255)))
 
     hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
 
     hsv_thresh = cv2.inRange(hsv_img, 
-                            numpy.array((30, 30, 30 )),
+                            numpy.array((50, 205, 50 )),
                             numpy.array((100, 255, 255)))
 
     M = cv2.moments(hsv_thresh)
@@ -74,11 +77,18 @@ def callback_image(data):
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
         print('cx: %f, cy %f' %(cx, cy))
-        cv2.circle(cv_image, (cx, cy), 20, (255, 0, 0), -1)
+        cv2.circle(cv_image, (cx, cy), 10, (255, 0, 0), -1)
 
     cv2.imshow("Image Window", cv_image)
     cv2.waitKey(1)
 
+    if(data.data>200):
+        msg.linear.x = 0.1
+        print "test"
+        quit()
+    else:
+        msg.linear.x = 0
+    twist_pub_.publish(msg)
 
 def state(state):
     global state_

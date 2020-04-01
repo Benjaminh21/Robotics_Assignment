@@ -54,8 +54,8 @@ def callback_laser(msg):
     print regions_
     move()
 
-def callback_image(data):
-    try:
+def callback_image(data): #Callback Function for the camera image#
+    try:                  #The basis of this function was taken from workshop code and then edited for the purposes of the maze solver#
         cv_image = bridge.imgmsg_to_cv2(data, desired_encoding="bgr8")
     except CvBridgeError as e:
         print(e)
@@ -69,24 +69,22 @@ def callback_image(data):
 
     hsv_img = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
 
-    hsv_thresh_red = cv2.inRange(hsv_img, 
-                            numpy.array((0, 100, 100 )),
+    hsv_thresh_red = cv2.inRange(hsv_img,   #We are looking for red to avoid traps#
+                            numpy.array((0, 100, 100 )),    #Here is the upper and lower bound of the red we need to find#
                             numpy.array((10, 255, 255)))
 
     M = cv2.moments(hsv_thresh_red)
     if M['m00'] > 0:
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
-        print('cx: %f, cy %f' %(cx, cy))
+        print('cx: %f, cy %f' %(cx, cy))  #Here we print the colours and place a circle on the centre of the red square if it is found#
         cv2.circle(cv_image, (cx, cy), 10, (255, 0, 0), -1)
-        #rate = rospy.Rate(2000)
-        #turnAround()
-        msg.angular.z = 3
-        twist_pub_.publish(msg)
+        msg.angular.z = 3   #If a red square (trap) is seen the robot needs to turn around to avoid it and go back to find another path#
+        twist_pub_.publish(msg)  #Publish twist message#
         #rate.sleep
         print "Read Ahead - Avoiding"
     else:
-        print "No traps ahead"
+        print "No traps ahead"    
 
     cv2.imshow("Image Window", cv_image)
     cv2.waitKey(1)
@@ -141,7 +139,7 @@ def turnLeft():
     time = 5
     msg = Twist()
     #msg.angular.z = pi*2/4/time
-    msg.angular.z = 1               #If the robot needs to turn left the angular momentem is changed to 1#
+    msg.angular.z = 1.5               #If the robot needs to turn left the angular momentem is changed to 1#
     return msg                      #Twist message is returned#                           
                                     #This is repreated for turning right and moving forward#
 def turnRight():
@@ -160,8 +158,7 @@ def main():
     global twist_pub_
     global state_
     global bridge
-    rospy.init_node("Explorer")
-		
+    rospy.init_node("Explorer")	
     bridge = CvBridge()
 
     #Subscribers
